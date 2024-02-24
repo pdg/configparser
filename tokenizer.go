@@ -7,53 +7,53 @@ import (
 
 type Token struct {
 	Text string
+	Pos  int
 }
 
 type Tokenizer struct {
 	r         *bufio.Reader
 	Seps      []rune
 	prevToken []*Token
+	pos       int // current position in the tokenizer.
 }
 
 func NewTokenizer(r io.Reader) *Tokenizer {
 	return &Tokenizer{
 		r:    bufio.NewReader(r),
-		Seps: []rune{' ', '\t'}} // default seperator characters
+		Seps: []rune{' ', '\t'}, // default seperator characters
+		pos:  0,
+	}
 }
 
-func (z *Tokenizer) IsSep(r rune) bool {
+func (z *Tokenizer) IsSep(ru rune) bool {
 	for _, sep := range z.Seps {
-		if r == sep {
+		if ru == sep {
 			return true
 		}
 	}
 	return false
 }
 
-func (z *Tokenizer) Peako() (rune, error) {
-
-	// read rune
+func (z *Tokenizer) ReadRune() (rune, int, error) {
 	ru, i, err := z.r.ReadRune()
-	if err != nil && err != io.EOF {
-		return 0, err
+	if err == nil || err == io.EOF {
+		z.pos++
 	}
-
-	// unread rune
-	if i != 0 {
-		err = z.r.UnreadRune()
-		if err != nil {
-			return 0, err
-		}
-	}
-
-	return ru, nil
-
+	return ru, i, err
 }
 
-func (z *Tokenizer) readQutedString() (string, error) {
+func (z *Tokenizer) UnreadRune() error {
+	err := z.r.UnreadRune()
+	if err == nil {
+		z.pos = z.pos - 1
+	}
+	return err
+}
+
+func (z *Tokenizer) readQuotedString() (string, error) {
 
 	var s string
-	for ru, _, err := z.r.ReadRune(); err != io.EOF; ru, _, err = z.r.ReadRune() {
+	for ru, _, err := z.ReadRune(); err != io.EOF; ru, _, err = z.ReadRune() {
 
 		if err != nil {
 			return "", err
@@ -72,25 +72,39 @@ func (z *Tokenizer) readQutedString() (string, error) {
 
 }
 
-func (z *Tokenizer) SkipToContent() error {
+func (z *Tokenizer) SkipToNextToken() error {
+	return z.Skip(z.Seps...)
+}
 
-	for ru, _, err := z.r.ReadRune(); err != io.EOF; ru, _, err = z.r.ReadRune() {
+func (z *Tokenizer) Skip(runes ...rune) error {
+
+	for ru, _, err := z.ReadRune(); err != io.EOF; ru, _, err = z.ReadRune() {
 
 		if err != nil {
 			return err
 		}
 
-		if !z.IsSep(ru) && ru != '\n' {
-			err = z.r.UnreadRune()
-			if err != nil {
-				return err
+		var skip bool
+		for _, r := range runes {
+			if ru == r {
+				skip = true
 			}
-			break
+		}
+
+		if skip {
+			continue
+		}
+
+		if err := z.UnreadRune(); err != nil {
+			return err
+		} else {
+			return nil
 		}
 
 	}
 
-	return nil
+	return io.EOF
+
 }
 
 func (z *Tokenizer) PutBack(t *Token) {
@@ -107,7 +121,9 @@ func (z *Tokenizer) Next() (*Token, error) {
 
 	t := &Token{}
 
-	for ru, _, err := z.r.ReadRune(); err != io.EOF; ru, _, err = z.r.ReadRune() {
+	s := -1
+
+	for ru, _, err := z.ReadRune(); err != io.EOF; ru, _, err = z.ReadRune() {
 
 		// read error
 		if err != nil {
@@ -116,7 +132,7 @@ func (z *Tokenizer) Next() (*Token, error) {
 
 		// quoted string
 		if ru == '"' && len(t.Text) == 0 {
-			str, err := z.readQutedString()
+			str, err := z.readQuotedString()
 			if err != nil {
 				return nil, err
 			}
@@ -124,7 +140,7 @@ func (z *Tokenizer) Next() (*Token, error) {
 			break
 		}
 
-		// seperator character
+		// seperator
 		if z.IsSep(ru) {
 			if t.Text == "" {
 				continue
@@ -135,12 +151,14 @@ func (z *Tokenizer) Next() (*Token, error) {
 		// end of line
 		if ru == '\n' {
 
+			s++
+
 			if t.Text == "" {
 				t.Text = string(ru)
 				break
 			}
 
-			err = z.r.UnreadRune()
+			err = z.UnreadRune()
 			if err != nil {
 				return nil, err
 			}
@@ -157,6 +175,7 @@ func (z *Tokenizer) Next() (*Token, error) {
 		return nil, io.EOF
 	}
 
+	t.Pos = z.pos - len([]rune(t.Text)) + s
 	return t, nil
 
 }

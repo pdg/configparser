@@ -14,6 +14,10 @@ type Directive struct {
 
 type Argument string
 
+func Parse(r io.Reader) ([]*Directive, error) {
+	return ParseDirectives(NewTokenizer(r))
+}
+
 func ParseDirectives(z *Tokenizer) ([]*Directive, error) {
 
 	var ds []*Directive
@@ -45,7 +49,10 @@ func ParseDirective(z *Tokenizer) (*Directive, error) {
 
 	d := &Directive{}
 
-	z.SkipToContent()
+	err := z.SkipToNextToken()
+	if err != nil {
+		return nil, err
+	}
 
 	t, err := z.Next()
 	if err != nil {
@@ -79,11 +86,6 @@ func ParseArguments(z *Tokenizer) ([]Argument, error) {
 			break
 		}
 
-		if t.Text == "" {
-			break
-		}
-
-		// log.Println(args)
 		args = append(args, Argument(t.Text))
 	}
 
@@ -113,16 +115,40 @@ func ParseSubDirectives(z *Tokenizer) ([]*Directive, error) {
 			return nil, err
 		}
 
-		// ENDLESS LOOP?
+		// make sure subdirective starts in new line
+		if t.Text != "\n" {
+			return nil, errors.New("unexpected token: " + t.Text + "; expected newline before new subdirective entry")
+		}
 
-		if t.Text == "}" || t.Text == "" {
+		// skip linebreaks and whitespace characters
+		err := z.Skip('\n', ' ', '\t')
+		if err == io.EOF {
+			return nil, errors.New("unexpected EOF in subdirectives block; closing curely brace missing")
+		}
+		if err != nil {
+			return nil, err
+		}
+
+		// get next token
+		t, err := z.Next()
+		if err != nil {
+			return nil, err
+		}
+
+		// break if subdirectives block ends
+		if t.Text == "}" {
 			break
 		}
 
+		// put back token if not end of subdirectives block
+		z.PutBack(t)
+
+		// parse subdirective
 		d, err := ParseDirective(z)
 		if err != nil {
 			return nil, err
 		}
+
 		ds = append(ds, d)
 	}
 

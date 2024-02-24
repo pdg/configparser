@@ -7,14 +7,8 @@ import (
 	"testing"
 )
 
-func TestParseArguments(t *testing.T) {
-}
-
-func TestParseArgument(t *testing.T) {
-}
-
 func TestParseDirective(t *testing.T) {
-	input := `  distribution "debian" stable `
+	input := `distribution "debian" stable`
 	wants := &Directive{Name: "distribution", Arguments: []Argument{"debian", "stable"}}
 
 	tok := NewTokenizer(strings.NewReader(input))
@@ -35,11 +29,13 @@ func TestParseDirectives(t *testing.T) {
 
 		global
 
-		distribution "debian" {
+		distribution "debian" { 
+
 			suite stable
-			component "main" "contrib" "non-free"
+			component "main" "contrib" "non free"
+
 		}
-	
+
 	`
 	wants := []*Directive{{
 		Name:          "global",
@@ -54,7 +50,7 @@ func TestParseDirectives(t *testing.T) {
 			Subdirectives: nil,
 		}, {
 			Name:          "component",
-			Arguments:     []Argument{"main", "contrib", "non-free"},
+			Arguments:     []Argument{"main", "contrib", "non free"},
 			Subdirectives: nil,
 		}},
 	}}
@@ -69,7 +65,7 @@ func TestParseDirectives(t *testing.T) {
 	gotj, _ := json.MarshalIndent(got, "", "  ")
 	wantsj, _ := json.MarshalIndent(wants, "", "  ")
 
-	if !reflect.DeepEqual(gotj, wantsj) {
+	if string(gotj) != string(wantsj) {
 		t.Errorf("\ngot: %s\n\nwanted: %s", gotj, wantsj)
 	}
 
