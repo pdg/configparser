@@ -5,16 +5,26 @@ import (
 	"io"
 )
 
+type TokenType int
+
+const (
+	Linebreak TokenType = iota
+	Literal
+	Quoted
+	Comment
+)
+
 type Token struct {
 	Text string
 	Pos  int
+	Type TokenType
 }
 
 type Tokenizer struct {
 	r         *bufio.Reader
 	Seps      []rune
 	prevToken []*Token
-	pos       int // current position in the tokenizer.
+	pos       int // current position in the tokenizer
 }
 
 func NewTokenizer(r io.Reader) *Tokenizer {
@@ -50,7 +60,7 @@ func (z *Tokenizer) UnreadRune() error {
 	return err
 }
 
-func (z *Tokenizer) readQuotedString() (string, error) {
+func (z *Tokenizer) readQuoted() (string, error) {
 
 	var s string
 	for ru, _, err := z.ReadRune(); err != io.EOF; ru, _, err = z.ReadRune() {
@@ -61,6 +71,31 @@ func (z *Tokenizer) readQuotedString() (string, error) {
 
 		// end of quoted string
 		if ru == '"' {
+			break
+		}
+
+		s += string(ru)
+
+	}
+
+	return s, nil
+
+}
+
+func (z *Tokenizer) readComment() (string, error) {
+
+	var s string
+	for ru, _, err := z.ReadRune(); err != io.EOF; ru, _, err = z.ReadRune() {
+
+		if err != nil {
+			return "", err
+		}
+
+		if ru == '\n' {
+			err = z.UnreadRune()
+			if err != nil {
+				return "", err
+			}
 			break
 		}
 
@@ -132,11 +167,23 @@ func (z *Tokenizer) Next() (*Token, error) {
 
 		// quoted string
 		if ru == '"' && len(t.Text) == 0 {
-			str, err := z.readQuotedString()
+			str, err := z.readQuoted()
 			if err != nil {
 				return nil, err
 			}
 			t.Text = str
+			t.Type = Quoted
+			break
+		}
+
+		// comment
+		if ru == '#' && len(t.Text) == 0 {
+			str, err := z.readComment()
+			if err != nil && err != io.EOF {
+				return nil, err
+			}
+			t.Text = str
+			t.Type = Comment
 			break
 		}
 
@@ -154,6 +201,7 @@ func (z *Tokenizer) Next() (*Token, error) {
 			s++
 
 			if t.Text == "" {
+				t.Type = Linebreak
 				t.Text = string(ru)
 				break
 			}
@@ -166,7 +214,8 @@ func (z *Tokenizer) Next() (*Token, error) {
 			break
 		}
 
-		// normal characters
+		// Literal
+		t.Type = Literal
 		t.Text += string(ru)
 
 	}

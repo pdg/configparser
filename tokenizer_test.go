@@ -11,9 +11,9 @@ func TestTokenizerNext(t *testing.T) {
 
 	input := `distribution  debian stable`
 	wants := []*Token{
-		{"distribution", 0},
-		{"debian", 14},
-		{"stable", 21},
+		{"distribution", 0, Literal},
+		{"debian", 14, Literal},
+		{"stable", 21, Literal},
 	}
 
 	z := NewTokenizer(strings.NewReader(input))
@@ -60,24 +60,26 @@ func TestTokenizerNextFull(t *testing.T) {
 			}
 
 		}
+		# comment
 	`
 
 	wants := []*Token{
-		{"\n", 0},
-		{"distribution", 4},
-		{"döbian", 18},
-		{"{", 26}, {"\n", 27}, {"\n", 31},
-		{"suite", 35},
-		{"stable", 42}, {"\n", 49},
-		{"architecture", 53},
-		{"amd64 and more", 67}, {"\n", 82}, {"\n", 83},
-		{"repository", 87},
-		{"{", 98}, {"\n", 99},
-		{"security", 104}, {"\n", 112},
-		{"backports", 117}, {"\n", 126},
-		{"updates", 131}, {"\n", 138},
-		{"}", 142}, {"\n", 143}, {"\n", 144},
-		{"}", 147}, {"\n", 148},
+		{"\n", 0, Linebreak},
+		{"distribution", 4, Literal},
+		{"döbian", 18, Quoted},
+		{"{", 26, Literal}, {"\n", 27, Linebreak}, {"\n", 31, Linebreak},
+		{"suite", 35, Literal},
+		{"stable", 42, Quoted}, {"\n", 49, Linebreak},
+		{"architecture", 53, Literal},
+		{"amd64 and more", 67, Quoted}, {"\n", 82, Linebreak}, {"\n", 83, Linebreak},
+		{"repository", 87, Literal},
+		{"{", 98, Literal}, {"\n", 99, Linebreak},
+		{"security", 104, Literal}, {"\n", 112, Linebreak},
+		{"backports", 117, Literal}, {"\n", 126, Linebreak},
+		{"updates", 131, Literal}, {"\n", 138, Linebreak},
+		{"}", 142, Literal}, {"\n", 143, Linebreak}, {"\n", 144, Linebreak},
+		{"}", 147, Literal}, {"\n", 148, Linebreak},
+		{" comment", 151, Comment}, {"\n", 160, Linebreak},
 	}
 
 	z := NewTokenizer(strings.NewReader(input))
@@ -105,19 +107,19 @@ c d {
 `
 
 	wants := []*Token{
-		{"a", 0},
-		{"b", 2},
-		{"\n", 3},
-		{"c", 4},
-		{"d", 6},
-		{"{", 8},
-		{"\n", 9},
-		{"\n", 10},
-		{"e", 13},
-		{"\n", 15},
-		{"\n", 16},
-		{"}", 17},
-		{"\n", 18},
+		{"a", 0, Literal},
+		{"b", 2, Literal},
+		{"\n", 3, Linebreak},
+		{"c", 4, Literal},
+		{"d", 6, Literal},
+		{"{", 8, Literal},
+		{"\n", 9, Linebreak},
+		{"\n", 10, Linebreak},
+		{"e", 13, Quoted},
+		{"\n", 15, Linebreak},
+		{"\n", 16, Linebreak},
+		{"}", 17, Literal},
+		{"\n", 18, Linebreak},
 	}
 
 	z := NewTokenizer(strings.NewReader(input))
@@ -151,7 +153,7 @@ func TestTokenizerSkip(t *testing.T) {
 		t.Errorf("unexpected error %q", err)
 	}
 
-	want := &Token{"a", 4}
+	want := &Token{"a", 4, Literal}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("got %#v, wanted %#v", got, want)
 	}
