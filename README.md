@@ -1,9 +1,8 @@
 # Configparser
 
-Parse configuration files that are similar to [Caddyfile](https://caddyserver.com/docs/caddyfile/concepts). 
+This implements a simple config format parser. The format is similar to the one used by the `caddy` webservers [Caddyfile](https://caddyserver.com/docs/caddyfile). 
 
 ## Sample Usage
-
 
 ~~~go
 
