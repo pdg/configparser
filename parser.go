@@ -9,23 +9,48 @@ import (
 type Directive struct {
 	Name          string
 	Arguments     []Argument
-	Subdirectives []*Directive
+	Subdirectives Directives
 }
 
 type Argument string
 
-func Parse(r io.Reader) ([]*Directive, error) {
-	return parseDirectives(NewTokenizer(r))
+type Directives []*Directive
+
+func Parse(r io.Reader) (Directives, error) {
+	dirs, err := parseDirectives(NewTokenizer(r))
+	if err != nil {
+		return nil, err
+	}
+	return dirs, nil
 }
 
-func parseDirectives(z *Tokenizer) ([]*Directive, error) {
+func (d Directives) Get(keys ...string) *Directive {
+
+	if len(keys) == 0 {
+		return nil
+	}
+
+	key, subkeys := keys[0], keys[1:]
+	for _, d := range d {
+		if d.Name == key {
+			if len(subkeys) > 0 {
+				return d.Subdirectives.Get(subkeys...)
+			}
+			return d
+		}
+	}
+
+	return nil
+}
+
+func parseDirectives(z *Tokenizer) (Directives, error) {
 
 	var ds []*Directive
 
 	for t, err := z.Next(); err != io.EOF; t, err = z.Next() {
 
 		if t.Text == "{" || t.Text == "}" {
-			return nil, errors.New("unexpected token: " + t.Text + "; expected start of directive")
+			return Directives{}, errors.New("unexpected token: " + t.Text + "; expected start of directive")
 		}
 
 		if strings.TrimSpace(t.Text) == "" {
@@ -36,12 +61,12 @@ func parseDirectives(z *Tokenizer) ([]*Directive, error) {
 
 		d, err := parseDirective(z)
 		if err != nil {
-			return nil, err
+			return Directives{}, err
 		}
 		ds = append(ds, d)
 	}
 
-	return ds, nil
+	return Directives(ds), nil
 
 }
 
@@ -93,9 +118,9 @@ func parseArguments(z *Tokenizer) ([]Argument, error) {
 
 }
 
-func parseSubDirectives(z *Tokenizer) ([]*Directive, error) {
+func parseSubDirectives(z *Tokenizer) (Directives, error) {
 
-	var ds []*Directive
+	var ds Directives
 
 	t, err := z.Next()
 

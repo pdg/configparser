@@ -70,3 +70,30 @@ func TestParseDirectives(t *testing.T) {
 	}
 
 }
+
+func TestGet(t *testing.T) {
+	input := `
+	distribution "debian" { 
+		suite stable {
+			component "main" "contrib" "non free"
+		}		
+	}
+	`
+
+	config, err := Parse(strings.NewReader(input))
+
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	got := config.Get("distribution", "suite", "component")
+	wants := &Directive{Name: "component", Arguments: []Argument{"main", "contrib", "non free"}, Subdirectives: nil}
+
+	gotj, _ := json.MarshalIndent(got, "", "  ")
+	wantsj, _ := json.MarshalIndent(wants, "", "  ")
+
+	if string(gotj) != string(wantsj) {
+		t.Errorf("\ngot: %s\n\nwanted: %s", gotj, wantsj)
+	}
+
+}
