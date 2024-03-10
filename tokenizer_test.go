@@ -1,4 +1,4 @@
-package main
+package configparser
 
 import (
 	"io"
@@ -67,19 +67,19 @@ func TestTokenizerNextFull(t *testing.T) {
 		{"\n", 0, Linebreak},
 		{"distribution", 4, Literal},
 		{"döbian", 18, Quoted},
-		{"{", 26, Literal}, {"\n", 27, Linebreak}, {"\n", 31, Linebreak},
-		{"suite", 35, Literal},
-		{"stable", 42, Quoted}, {"\n", 49, Linebreak},
-		{"architecture", 53, Literal},
-		{"amd64 and more", 67, Quoted}, {"\n", 82, Linebreak}, {"\n", 83, Linebreak},
-		{"repository", 87, Literal},
-		{"{", 98, Literal}, {"\n", 99, Linebreak},
-		{"security", 104, Literal}, {"\n", 112, Linebreak},
-		{"backports", 117, Literal}, {"\n", 126, Linebreak},
-		{"updates", 131, Literal}, {"\n", 138, Linebreak},
-		{"}", 142, Literal}, {"\n", 143, Linebreak}, {"\n", 144, Linebreak},
-		{"}", 147, Literal}, {"\n", 148, Linebreak},
-		{" comment", 151, Comment}, {"\n", 160, Linebreak},
+		{"{", 26, Literal}, {"\n", 27, Linebreak}, {"\n", 34, Linebreak},
+		{"suite", 41, Literal},
+		{"stable", 48, Quoted}, {"\n", 55, Linebreak},
+		{"architecture", 62, Literal},
+		{"amd64 and more", 76, Quoted}, {"\n", 91, Linebreak}, {"\n", 92, Linebreak},
+		{"repository", 99, Literal},
+		{"{", 110, Literal}, {"\n", 111, Linebreak},
+		{"security", 120, Literal}, {"\n", 128, Linebreak},
+		{"backports", 137, Literal}, {"\n", 146, Linebreak},
+		{"updates", 155, Literal}, {"\n", 162, Linebreak},
+		{"}", 169, Literal}, {"\n", 170, Linebreak}, {"\n", 171, Linebreak},
+		{"}", 176, Literal}, {"\n", 177, Linebreak},
+		{" comment", 182, Comment}, {"\n", 191, Linebreak},
 	}
 
 	z := NewTokenizer(strings.NewReader(input))
@@ -116,11 +116,11 @@ c d {
 		{"{", 8, Literal},
 		{"\n", 9, Linebreak},
 		{"\n", 10, Linebreak},
-		{"e", 13, Quoted},
-		{"\n", 15, Linebreak},
+		{"e", 14, Quoted},
 		{"\n", 16, Linebreak},
-		{"}", 17, Literal},
-		{"\n", 18, Linebreak},
+		{"\n", 17, Linebreak},
+		{"}", 18, Literal},
+		{"\n", 19, Linebreak},
 	}
 
 	z := NewTokenizer(strings.NewReader(input))
@@ -154,7 +154,7 @@ func TestTokenizerSkip(t *testing.T) {
 		t.Errorf("unexpected error %q", err)
 	}
 
-	want := &Token{"a", 4, Literal}
+	want := &Token{"a", 5, Literal}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("got %#v, wanted %#v", got, want)
 	}
