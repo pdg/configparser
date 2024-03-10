@@ -12,7 +12,7 @@ func TestParseDirective(t *testing.T) {
 	wants := &Directive{Name: "distribution", Arguments: []Argument{"debian", "stable"}}
 
 	tok := NewTokenizer(strings.NewReader(input))
-	got, err := ParseDirective(tok)
+	got, err := parseDirective(tok)
 
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)
@@ -56,7 +56,7 @@ func TestParseDirectives(t *testing.T) {
 	}}
 
 	tok := NewTokenizer(strings.NewReader(input))
-	got, err := ParseDirectives(tok)
+	got, err := parseDirectives(tok)
 
 	if err != nil {
 		t.Errorf("unexpected error: %v", err)

@@ -37,7 +37,7 @@ func NewTokenizer(r io.Reader) *Tokenizer {
 	}
 }
 
-func (z *Tokenizer) IsSep(ru rune) bool {
+func (z *Tokenizer) isSep(ru rune) bool {
 	for _, sep := range z.Seps {
 		if ru == sep {
 			return true
@@ -46,7 +46,7 @@ func (z *Tokenizer) IsSep(ru rune) bool {
 	return false
 }
 
-func (z *Tokenizer) ReadRune() (rune, int, error) {
+func (z *Tokenizer) readRune() (rune, int, error) {
 	ru, i, err := z.r.ReadRune()
 	if err == nil || err == io.EOF {
 		z.pos++
@@ -54,7 +54,7 @@ func (z *Tokenizer) ReadRune() (rune, int, error) {
 	return ru, i, err
 }
 
-func (z *Tokenizer) UnreadRune() error {
+func (z *Tokenizer) unreadRune() error {
 	err := z.r.UnreadRune()
 	if err == nil {
 		z.pos = z.pos - 1
@@ -65,7 +65,7 @@ func (z *Tokenizer) UnreadRune() error {
 func (z *Tokenizer) readQuoted() (string, error) {
 
 	var s string
-	for ru, _, err := z.ReadRune(); err != io.EOF; ru, _, err = z.ReadRune() {
+	for ru, _, err := z.readRune(); err != io.EOF; ru, _, err = z.readRune() {
 
 		if err != nil {
 			return "", err
@@ -87,14 +87,14 @@ func (z *Tokenizer) readQuoted() (string, error) {
 func (z *Tokenizer) readComment() (string, error) {
 
 	var s string
-	for ru, _, err := z.ReadRune(); err != io.EOF; ru, _, err = z.ReadRune() {
+	for ru, _, err := z.readRune(); err != io.EOF; ru, _, err = z.readRune() {
 
 		if err != nil {
 			return "", err
 		}
 
 		if ru == '\n' {
-			err = z.UnreadRune()
+			err = z.unreadRune()
 			if err != nil {
 				return "", err
 			}
@@ -109,13 +109,13 @@ func (z *Tokenizer) readComment() (string, error) {
 
 }
 
-func (z *Tokenizer) SkipToNextToken() error {
-	return z.Skip(z.Seps...)
+func (z *Tokenizer) skipToNextToken() error {
+	return z.skip(z.Seps...)
 }
 
-func (z *Tokenizer) Skip(runes ...rune) error {
+func (z *Tokenizer) skip(runes ...rune) error {
 
-	for ru, _, err := z.ReadRune(); err != io.EOF; ru, _, err = z.ReadRune() {
+	for ru, _, err := z.readRune(); err != io.EOF; ru, _, err = z.readRune() {
 
 		if err != nil {
 			return err
@@ -132,7 +132,7 @@ func (z *Tokenizer) Skip(runes ...rune) error {
 			continue
 		}
 
-		if err := z.UnreadRune(); err != nil {
+		if err := z.unreadRune(); err != nil {
 			return err
 		} else {
 			return nil
@@ -144,7 +144,7 @@ func (z *Tokenizer) Skip(runes ...rune) error {
 
 }
 
-func (z *Tokenizer) PutBack(t *Token) {
+func (z *Tokenizer) putBack(t *Token) {
 	z.prevToken = append(z.prevToken, t)
 }
 
@@ -160,7 +160,7 @@ func (z *Tokenizer) Next() (*Token, error) {
 
 	s := -1
 
-	for ru, _, err := z.ReadRune(); err != io.EOF; ru, _, err = z.ReadRune() {
+	for ru, _, err := z.readRune(); err != io.EOF; ru, _, err = z.readRune() {
 
 		// read error
 		if err != nil {
@@ -193,7 +193,7 @@ func (z *Tokenizer) Next() (*Token, error) {
 		}
 
 		// seperator
-		if z.IsSep(ru) {
+		if z.isSep(ru) {
 			if t.Text == "" {
 				continue
 			}
@@ -211,7 +211,7 @@ func (z *Tokenizer) Next() (*Token, error) {
 				break
 			}
 
-			err = z.UnreadRune()
+			err = z.unreadRune()
 			if err != nil {
 				return nil, err
 			}

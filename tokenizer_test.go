@@ -144,7 +144,7 @@ func TestTokenizerSkip(t *testing.T) {
 
 	z := NewTokenizer(strings.NewReader(input))
 
-	err := z.Skip('\n', ' ', '\t')
+	err := z.skip('\n', ' ', '\t')
 	if err != nil {
 		t.Errorf("unexpected error %q", err)
 	}
