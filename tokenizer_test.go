@@ -49,19 +49,19 @@ func TestTokenizerNextFull(t *testing.T) {
 
 	input := `
    distribution "döbian" {
-			
-			suite "stable"
-			architecture "amd64 and more"
+      
+      suite "stable"
+      architecture "amd64 and more"
 
-			repository {
-				security
-				backports
-				updates
-			}
+      repository {
+        security
+        backports
+        updates
+      }
 
-		}
-		# comment
-	`
+    }
+    # comment
+  `
 
 	wants := []*Token{
 		{"\n", 0, Linebreak},
@@ -102,7 +102,7 @@ func TestTokenizerNextShort(t *testing.T) {
 	input := `a b
 c d {
 
-	"e"
+  "e"
 
 }
 `
@@ -140,7 +140,7 @@ c d {
 func TestTokenizerSkip(t *testing.T) {
 
 	input := `  
-	a`
+  a`
 
 	z := NewTokenizer(strings.NewReader(input))
 

@@ -27,16 +27,16 @@ func TestParseDirectives(t *testing.T) {
 
 	input := `
 
-		global # test
+    global # test
 
-		distribution "debian" { 
+    distribution "debian" { 
 
-			suite stable
-			component "main" "contrib" "non free"
+      suite stable
+      component "main" "contrib" "non free"
 
-		}
+    }
 
-	`
+  `
 	wants := []*Directive{{
 		Name:          "global",
 		Arguments:     nil,
