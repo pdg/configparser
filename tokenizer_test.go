@@ -83,6 +83,7 @@ func TestTokenizerNextFull(t *testing.T) {
 	}
 
 	z := NewTokenizer(strings.NewReader(input))
+	z.SkipComments = false
 
 	for _, want := range wants {
 		got, err := z.Next()

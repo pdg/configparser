@@ -21,17 +21,19 @@ type Token struct {
 }
 
 type Tokenizer struct {
-	r         *bufio.Reader
-	Seps      []rune
-	prevToken []*Token
-	pos       int // current position in the tokenizer
+	r            *bufio.Reader
+	Seps         []rune
+	SkipComments bool
+	prevToken    []*Token
+	pos          int // current position in the tokenizer
 }
 
 func NewTokenizer(r io.Reader) *Tokenizer {
 	return &Tokenizer{
-		r:    bufio.NewReader(r),
-		Seps: []rune{' ', '\t'}, // default seperator characters
-		pos:  0,
+		r:            bufio.NewReader(r),
+		Seps:         []rune{' ', '\t'}, // default seperator characters
+		pos:          0,
+		SkipComments: true,
 	}
 }
 
@@ -181,6 +183,9 @@ func (z *Tokenizer) Next() (*Token, error) {
 			str, err := z.readComment()
 			if err != nil && err != io.EOF {
 				return nil, err
+			}
+			if z.SkipComments {
+				continue
 			}
 			t.Text = str
 			t.Type = Comment

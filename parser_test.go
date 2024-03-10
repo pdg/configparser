@@ -27,7 +27,7 @@ func TestParseDirectives(t *testing.T) {
 
 	input := `
 
-		global
+		global # test
 
 		distribution "debian" { 
 
