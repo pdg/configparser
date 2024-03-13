@@ -24,7 +24,9 @@ func Parse(r io.Reader) (Directives, error) {
 	return dirs, nil
 }
 
-func (d Directives) Get(keys ...string) *Directive {
+func (d Directives) All(keys ...string) Directives {
+
+	var ds Directives
 
 	if len(keys) == 0 {
 		return nil
@@ -34,7 +36,29 @@ func (d Directives) Get(keys ...string) *Directive {
 	for _, d := range d {
 		if d.Name == key {
 			if len(subkeys) > 0 {
-				return d.Subdirectives.Get(subkeys...)
+				sds := d.Subdirectives.All(subkeys...)
+				ds = append(ds, []*Directive(sds)...)
+			} else {
+				ds = append(ds, d)
+			}
+		}
+	}
+
+	return ds
+
+}
+
+func (d Directives) First(keys ...string) *Directive {
+
+	if len(keys) == 0 {
+		return nil
+	}
+
+	key, subkeys := keys[0], keys[1:]
+	for _, d := range d {
+		if d.Name == key {
+			if len(subkeys) > 0 {
+				return d.Subdirectives.First(subkeys...)
 			}
 			return d
 		}

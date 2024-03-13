@@ -71,7 +71,7 @@ func TestParseDirectives(t *testing.T) {
 
 }
 
-func TestGet(t *testing.T) {
+func TestFirst(t *testing.T) {
 	input := `
 	distribution "debian" { 
 		suite stable {
@@ -86,8 +86,41 @@ func TestGet(t *testing.T) {
 		t.Errorf("unexpected error: %v", err)
 	}
 
-	got := config.Get("distribution", "suite", "component")
+	got := config.First("distribution", "suite", "component")
 	wants := &Directive{Name: "component", Arguments: []Argument{"main", "contrib", "non free"}, Subdirectives: nil}
+
+	gotj, _ := json.MarshalIndent(got, "", "  ")
+	wantsj, _ := json.MarshalIndent(wants, "", "  ")
+
+	if string(gotj) != string(wantsj) {
+		t.Errorf("\ngot: %s\n\nwanted: %s", gotj, wantsj)
+	}
+
+}
+
+func TestAll(t *testing.T) {
+	input := `
+	node { 
+		role "one"
+		role "two"
+	}
+	node {
+		role "three"
+	}
+	`
+
+	config, err := Parse(strings.NewReader(input))
+
+	if err != nil {
+		t.Errorf("unexpected error: %v", err)
+	}
+
+	got := config.All("node", "role")
+	wants := Directives{
+		&Directive{Name: "role", Arguments: []Argument{"one"}, Subdirectives: nil},
+		&Directive{Name: "role", Arguments: []Argument{"two"}, Subdirectives: nil},
+		&Directive{Name: "role", Arguments: []Argument{"three"}, Subdirectives: nil},
+	}
 
 	gotj, _ := json.MarshalIndent(got, "", "  ")
 	wantsj, _ := json.MarshalIndent(wants, "", "  ")
